@@ -1,5 +1,5 @@
 streamlit==1.32.0
-groq==0.15.3
+groq==0.37.1
 requests==2.32.3
 python-dotenv==1.0.0
 PyPDF2==3.0.1
