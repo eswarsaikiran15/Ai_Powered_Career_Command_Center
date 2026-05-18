@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="AI Career Command Center",
     page_icon="🚀",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # ── Validate API Key ──────────────────────────────────────────────────────────
@@ -48,6 +48,18 @@ html, body, [class*="css"] {
 [data-testid="stSidebar"] {
     background: #161b22 !important;
     border-right: 1px solid #30363d;
+    position: relative !important;
+    z-index: 100 !important;
+}
+
+/* Prevent sidebar overlap on mobile */
+@media (max-width: 768px) {
+    [data-testid="stSidebar"] {
+        position: fixed !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+    }
+}
 }
 
 /* Main header */
