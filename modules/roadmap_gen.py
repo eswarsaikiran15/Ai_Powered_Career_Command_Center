@@ -73,7 +73,7 @@ def update_completed(roadmap_id: int, completed: list):
 
 def run():
     st.markdown("## 🗺️ Learning Roadmap Generator")
-    st.caption("Paste up to 5 job descriptions. AI extracts required skills, compares to your resume, and builds a week-by-week learning plan.")
+    st.caption("Paste up to 5 job descriptions. AI extracts required skills, compares to your resume, and builds a complete project-based learning plan.")
 
     resume_text = st.text_area("📄 Your Current Resume / Skills",
                                 height=150, placeholder="Paste your resume or list your current skills...")
@@ -102,7 +102,7 @@ def run():
 
             combined_jds = "\n\n---\n\n".join(jds[:5])
 
-            prompt = f"""You are a curriculum architect designing a SaaS product development roadmap. Create a DETAILED, PRODUCTION-READY learning path. Return ONLY valid JSON:
+            prompt = f"""You are a curriculum architect designing a complete project-based learning path. Create a DETAILED, PRODUCTION-READY learning plan to build real applications. Return ONLY valid JSON:
 {{
   "target_roles": ["Role 1", "Role 2"],
   "current_skills": ["skill1", "skill2"],
@@ -126,7 +126,7 @@ def run():
       "hands_on_goal": "Create API with authentication"
     }}
   ],
-  "saas_project_milestones": [
+  "project_development_phases": [
     {{
       "phase": "Phase 1: Foundation (Weeks 1-4)",
       "focus": "Core programming skills & environment setup",
@@ -284,7 +284,7 @@ Learning preferences: {', '.join(learning_style)}
 
 Create a PRODUCTION-READY roadmap with:
 1. Detailed daily activities for first 12 weeks
-2. Real SaaS project components (not just tutorials)
+2. Real project components you can build (not just tutorials)
 3. Specific, actionable learning resources
 4. Clear tech stack recommendations
 5. Deployment milestones
@@ -382,13 +382,13 @@ def _render_roadmap(roadmap: dict, roadmap_id=None):
                     st.markdown(f"→ {tech}")
         st.markdown("---")
 
-    # SaaS Project Phases
-    saas_milestones = roadmap.get("saas_project_milestones", [])
-    if saas_milestones:
-        st.markdown("### 🎯 SaaS Project Development Phases")
-        phase_tabs = st.tabs([m.get("phase", f"Phase {i+1}") for i, m in enumerate(saas_milestones)])
+    # Project Development Phases
+    project_phases = roadmap.get("project_development_phases", [])
+    if project_phases:
+        st.markdown("### 🎯 Project Development Phases")
+        phase_tabs = st.tabs([m.get("phase", f"Phase {i+1}") for i, m in enumerate(project_phases)])
         
-        for i, (tab, milestone) in enumerate(zip(phase_tabs, saas_milestones)):
+        for i, (tab, milestone) in enumerate(zip(phase_tabs, project_phases)):
             with tab:
                 st.markdown(f"**Focus:** {milestone.get('focus', '')}")
                 st.markdown(f"**Project Component:** {milestone.get('project_component', '')}")
@@ -546,7 +546,7 @@ def _render_roadmap(roadmap: dict, roadmap_id=None):
     # Hands-on Projects
     hands_on = roadmap.get("hands_on_projects", [])
     if hands_on:
-        st.markdown("### 💻 Hands-On SaaS Projects")
+        st.markdown("### 💻 Real-World Projects You'll Build")
         for project in hands_on:
             with st.expander(f"🚀 {project.get('name', '')} ({project.get('estimated_weeks', '')} weeks)"):
                 st.markdown(f"**Description:** {project.get('description', '')}")
@@ -625,7 +625,7 @@ def _render_roadmap(roadmap: dict, roadmap_id=None):
         {"heading": "Target Roles", "content": roadmap.get("target_roles",[])},
         {"heading": "Tech Stack", "content": [f"{k.upper()}: {', '.join(v) if isinstance(v, list) else v}" for k, v in tech_stack.items()] if tech_stack else []},
         {"heading": "Skill Gaps", "content": [f"{g.get('skill','')} ({g.get('priority','')} priority, {g.get('estimated_weeks',1)} weeks)" for g in gaps]},
-        {"heading": "SaaS Project Phases", "content": [f"{m.get('phase', '')} - {m.get('focus', '')}" for m in saas_milestones]},
+        {"heading": "Project Development Phases", "content": [f"{m.get('phase', '')} - {m.get('focus', '')}" for m in project_phases]},
         {"heading": "Weekly Plan Summary", "content": [f"Week {w.get('week',0)}: {w.get('theme','')} — {w.get('milestone','')}" for w in weekly_plan[:12]]},
         {"heading": "Monthly Milestones", "content": milestones},
         {"heading": "Certifications", "content": [f"{c.get('name','')} — {c.get('platform','')} ({'Free' if c.get('free') else 'Paid'})" for c in certs]},
