@@ -122,10 +122,46 @@ Economic Context:
 Provide realistic salary estimates in local currency AND USD equivalent."""
 
             try:
-                result = groq_json(prompt, max_tokens=2000)
-                _render_salary(result, display_currency, role, experience)
+                # Try models in order with automatic fallback
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", 2000),
+                    ("openai/gpt-oss-120b", 2000),
+                    ("llama-3.1-8b-instant", 2000)
+                ]
+                
+                result = None
+                last_error = None
+                for model, max_tokens in models_to_try:
+                    try:
+                        result = groq_json(prompt, model=model, max_tokens=max_tokens)
+                        break  # Success, exit loop
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        last_error = e
+                        
+                        # Retry with next model on rate limits or JSON errors
+                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg or "expecting value" in error_msg or "limit" in error_msg:
+                            continue  # Try next model
+                        else:
+                            raise  # Other errors, don't try next model
+                
+                if result:
+                    _render_salary(result, display_currency, role, experience)
+                else:
+                    if last_error:
+                        error_str = str(last_error)
+                        if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                            st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                        else:
+                            st.error(f"❌ Estimation failed: {error_str[:100]}... Please try again.")
+                    else:
+                        st.error("❌ All models are currently at capacity. Please try again tomorrow!")
             except Exception as e:
-                st.error(f"Estimation failed: {e}")
+                error_str = str(e)
+                if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                    st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                else:
+                    st.error(f"Estimation failed: {error_str}")
 
 
 def _render_salary(result: dict, display_currency: str, role: str, experience: str):
