@@ -27,10 +27,6 @@ if not API_KEY or "your_groq" in API_KEY:
     4. Restart the app
     """)
     st.stop()
-    
-    4. Restart the app
-    """)
-    st.stop()
 
 # ── Init DB ───────────────────────────────────────────────────────────────────
 from utils.db import init_db
@@ -66,7 +62,6 @@ html, body, [class*="css"] {
         height: 100vh !important;
         overflow-y: auto !important;
     }
-}
 }
 
 /* Main header */
