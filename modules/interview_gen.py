@@ -171,17 +171,25 @@ Make answers comprehensive, realistic, and interview-ready. Include specific exa
                 models_to_try = [
                     ("llama-3.3-70b-versatile", 7000),
                     ("openai/gpt-oss-120b", 7000),
-                    ("llama-3.1-8b-instant", 4000)
+                    ("llama-3.1-8b-instant", 5000)
                 ]
                 
                 result = None
+                last_error = None
                 for model, max_tokens in models_to_try:
                     try:
                         result = groq_json(prompt, model=model, max_tokens=max_tokens)
                         break  # Success, exit loop
                     except Exception as e:
                         error_msg = str(e).lower()
-                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg:
+                        last_error = e
+                        
+                        # Check if API limit is exhausted (0 tokens remaining)
+                        if "limit" in error_msg and ("used" in error_msg or "requested" in error_msg):
+                            # This is a rate limit error - try next model
+                            continue
+                        # Retry with next model on rate limits or JSON errors
+                        elif "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg or "expecting value" in error_msg:
                             continue  # Try next model
                         else:
                             raise  # Other errors, don't try next model
@@ -190,9 +198,21 @@ Make answers comprehensive, realistic, and interview-ready. Include specific exa
                     save_session(role, company, result)
                     _render_questions(result, role, company)
                 else:
-                    st.error("❌ All models are currently at capacity. Please try again in a few minutes.")
+                    if last_error:
+                        error_str = str(last_error)
+                        # Check if it's a rate limit/quota error
+                        if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                            st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                        else:
+                            st.error(f"❌ Generation failed: {error_str[:100]}... Please try again.")
+                    else:
+                        st.error("❌ All models are currently at capacity. Please try again tomorrow!")
             except Exception as e:
-                st.error(f"Generation failed: {e}")
+                error_str = str(e)
+                if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                    st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                else:
+                    st.error(f"Generation failed: {error_str}")
 
     # History
     with st.expander("📚 Previous Sessions"):
