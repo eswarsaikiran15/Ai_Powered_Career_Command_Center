@@ -44,9 +44,8 @@ def run():
         selected_model = st.selectbox("AI Model", [
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
-        ], help="Change the model if you encounter rate limits (e.g., Code 429).")
+            "openai/gpt-oss-120b"
+        ], help="Change the model if you encounter rate limits (e.g., Code 429). Gemma2-9b-it and Mixtral-8x7b are deprecated.")
 
     if st.button("🎯 Generate Questions", type="primary", use_container_width=True,
                  disabled=not role):
@@ -541,4 +540,3 @@ def _render_questions(result: dict, role: str, company: str):
                            file_name=f"interview_prep_{role.replace(' ','_')}.pdf",
                            mime="application/pdf",
                            use_container_width=True)
-
