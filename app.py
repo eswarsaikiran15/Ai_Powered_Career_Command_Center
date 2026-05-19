@@ -1,8 +1,11 @@
 import streamlit as st
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from project root
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 
 # Must be first Streamlit call
 st.set_page_config(
@@ -21,6 +24,10 @@ if not API_KEY or "your_groq" in API_KEY:
     1. Get a free key at [console.groq.com](https://console.groq.com)
     2. Copy `.env.example` → `.env`
     3. Add your key: `GROQ_API_KEY=gsk_...`
+    4. Restart the app
+    """)
+    st.stop()
+    
     4. Restart the app
     """)
     st.stop()
