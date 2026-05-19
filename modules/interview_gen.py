@@ -37,15 +37,7 @@ def run():
         "Technical", "Behavioral", "Situational", "HR/Cultural", "Case Study", "Coding"
     ], default=["Technical", "Behavioral", "HR/Cultural"])
 
-    col_nq, col_mod = st.columns(2)
-    with col_nq:
-        num_questions = st.slider("Number of Questions", 5, 25, 15)
-    with col_mod:
-        selected_model = st.selectbox("AI Model", [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "openai/gpt-oss-120b"
-        ], help="Change the model if you encounter rate limits (e.g., Code 429). Gemma2-9b-it and Mixtral-8x7b are deprecated.")
+    num_questions = st.slider("Number of Questions", 5, 25, 15)
 
     if st.button("🎯 Generate Questions", type="primary", use_container_width=True,
                  disabled=not role):
@@ -175,9 +167,30 @@ CRITICAL INSTRUCTIONS:
 Make answers comprehensive, realistic, and interview-ready. Include specific examples where applicable."""
 
             try:
-                result = groq_json(prompt, model=selected_model, max_tokens=7000)
-                save_session(role, company, result)
-                _render_questions(result, role, company)
+                # Try models in order, with automatic fallback
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", 7000),
+                    ("openai/gpt-oss-120b", 7000),
+                    ("llama-3.1-8b-instant", 4000)
+                ]
+                
+                result = None
+                for model, max_tokens in models_to_try:
+                    try:
+                        result = groq_json(prompt, model=model, max_tokens=max_tokens)
+                        break  # Success, exit loop
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg:
+                            continue  # Try next model
+                        else:
+                            raise  # Other errors, don't try next model
+                
+                if result:
+                    save_session(role, company, result)
+                    _render_questions(result, role, company)
+                else:
+                    st.error("❌ All models are currently at capacity. Please try again in a few minutes.")
             except Exception as e:
                 st.error(f"Generation failed: {e}")
 
