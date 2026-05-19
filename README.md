@@ -95,9 +95,34 @@ career_command_center/
 
 ---
 
+## ⚙️ API Resilience & Failover
+
+All modules include **automatic failover** to handle API rate limits gracefully:
+
+✅ **Multi-Model Fallback Chain**
+- Tries `llama-3.3-70b-versatile` (primary)
+- Falls back to `openai/gpt-oss-120b` (secondary)
+- Falls back to `llama-3.1-8b-instant` (tertiary)
+- No manual intervention needed
+
+✅ **Smart Error Handling**
+- Detects rate limits (429, 413 errors)
+- Detects JSON parse errors
+- Detects daily quota exhaustion
+- Automatically retries with next model
+
+✅ **User-Friendly Messages**
+- No technical jargon shown to users
+- Clear "API limit exhausted for today. Please try again tomorrow!" message
+- Invisible resilience — users don't see model selection
+
+**Applied across all 8 modules** — Resume Analyzer, Skill Trends, Interview Coach, Cover Letter, Salary Estimator, Daily Briefing, GitHub Analyzer, and Learning Roadmap.
+
+---
+
 ## 🌐 Free APIs Used
 
-- **Groq API** — AI brain (Llama 3.3 70b)
+- **Groq API** — AI brain (Llama 3.3 70b, GPT-OSS 120b, Llama 3.1 8b)
 - **HackerNews API** — Live job market data
 - **NewsAPI** — Tech news for briefing + cover letters
 - **GitHub API** — Profile analysis
