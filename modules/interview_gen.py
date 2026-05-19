@@ -42,13 +42,25 @@ def run():
     if st.button("🎯 Generate Questions", type="primary", use_container_width=True,
                  disabled=not role):
         with st.spinner("Generating your personalized interview prep with detailed answers..."):
-            prompt = f"""Generate {num_questions} interview questions with detailed answers as JSON.
-Return ONLY: {{"technical": [{{"question":"Q?", "difficulty":"Easy/Medium/Hard", "sample_answer":"3-5 sentences", "key_points":["p1"], "ideal_answer_framework":"structure", "red_flags":"avoid", "follow_up_questions":["q1"]}}], "behavioral":[{{"question":"Q?", "star_method":"S-T-A-R", "sample_answer":"4-6 sentences", "what_they_assess":"skill", "strong_answer_tips":["tip"], "metrics_to_mention":"results", "common_mistakes":["avoid"], "follow_up_questions":["q1"]}}], "situational":[{{"question":"Scenario?", "ideal_approach":"steps", "sample_answer":"approach", "key_steps":["s1"], "what_to_avoid":"mistakes", "follow_up_questions":["q1"]}}], "system_design":[{{"question":"Design X?", "core_concepts":["c1"], "architecture_overview":"overview", "key_components":["c1"], "scalability_considerations":"scaling", "tradeoffs":["pro|con"], "sample_approach":"detailed"}}], "hr_cultural":[{{"question":"Q?", "sample_answer":"answer", "company_research_tip":"research", "values_alignment":"value", "strong_answer_tips":["tip"], "what_to_avoid":"avoid"}}], "coding":[{{"question":"Q?", "topic":"topic", "difficulty":"Hard", "problem_breakdown":"approach", "solution_approach":"algorithm", "code_template":"code", "time_complexity":"O(n)", "space_complexity":"O(n)", "test_cases":["test"], "optimization_tips":["tip"]}}], "preparation_checklist":["item1"], "confidence_boosters":["boost"], "day_before_tips":["tip"], "on_interview_day":["action"], "questions_to_ask_interviewer":[{{"question":"Q?", "why_ask":"why", "good_time_to_ask":"when"}}]}}
+            prompt = f"""Generate {num_questions} interview questions with detailed answers. Return ONLY valid JSON:
+{{
+  "technical": [{{"question":"Q?", "difficulty":"Easy/Medium/Hard", "sample_answer":"3-5 sentences", "key_points":["p1","p2"], "ideal_answer_framework":"how to structure", "red_flags":"what to avoid", "follow_up_questions":["Q1?","Q2?"]}}],
+  "behavioral": [{{"question":"Q?", "star_method":"Situation-Task-Action-Result", "sample_answer":"4-5 sentences with STAR", "what_they_assess":"skill/trait", "strong_answer_tips":["tip1","tip2"], "metrics_to_mention":"numbers", "common_mistakes":["avoid1"], "follow_up_questions":["Q1?"]}}],
+  "situational": [{{"question":"What if scenario?", "ideal_approach":"steps", "sample_answer":"2-3 sentences", "key_steps":["step1","step2"], "what_to_avoid":"mistakes", "follow_up_questions":["Q1?"]}}],
+  "system_design": [{{"question":"Design X system?", "core_concepts":["c1"], "architecture_overview":"brief", "key_components":["c1"], "scalability_considerations":"scaling approach", "tradeoffs":["pro|con"], "sample_approach":"detailed"}}],
+  "hr_cultural": [{{"question":"Q?", "sample_answer":"answer", "company_research_tip":"what to research", "values_alignment":"value shown", "strong_answer_tips":["tip1"], "what_to_avoid":"avoid"}}],
+  "coding": [{{"question":"Q?", "topic":"Arrays/SQL/API/etc", "difficulty":"Easy/Medium/Hard", "problem_breakdown":"approach", "solution_approach":"algorithm", "code_template":"pseudocode", "time_complexity":"O(n)", "space_complexity":"O(n)", "test_cases":["test"], "optimization_tips":["tip1"]}}],
+  "preparation_checklist":["item1","item2"],
+  "confidence_boosters":["boost1"],
+  "day_before_tips":["tip1"],
+  "on_interview_day":["action1"],
+  "questions_to_ask_interviewer":[{{"question":"Q?", "why_ask":"why", "good_time_to_ask":"when"}}]
+}}
 
-Role: {role} | Company: {company or 'N/A'} | Level: {level} | Types: {', '.join(q_types)}
-JD: {jd_text[:1000] if jd_text else 'None'}
+Role: {role} | Company: {company or 'Not specified'} | Level: {level} | Types: {', '.join(q_types)} | Count: {num_questions}
+Job Description: {jd_text[:1500] if jd_text else 'Not provided'}
 
-MUST: Generate exactly {num_questions} questions. Detailed, realistic, interview-ready answers."""
+IMPORTANT: Generate EXACTLY {num_questions} questions total. Provide realistic, interview-ready answers."""
 
             try:
                 # Try models in order, with automatic fallback
