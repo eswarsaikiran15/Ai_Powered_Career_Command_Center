@@ -37,7 +37,7 @@ def run():
         "Technical", "Behavioral", "Situational", "HR/Cultural", "Case Study", "Coding"
     ], default=["Technical", "Behavioral", "HR/Cultural"])
 
-    num_questions = st.slider("Number of Questions", 5, 50, 20)
+    num_questions = st.slider("Number of Questions", 5, 25, 15)
 
     if st.button("🎯 Generate Questions", type="primary", use_container_width=True,
                  disabled=not role):
@@ -152,19 +152,22 @@ Question Types: {', '.join(q_types)}
 Total Questions: {num_questions}
 Job Description: {jd_text[:2000] if jd_text else 'Not provided'}
 
-Generate {num_questions} DETAILED questions with SAMPLE ANSWERS, KEY POINTS, and FOLLOW-UP QUESTIONS.
-For each question, provide:
-1. Clear, specific question
-2. Detailed sample answer (3-6 sentences)
-3. Key points to hit
-4. What hiring managers assess
-5. Common mistakes to avoid
-6. Follow-up questions they might ask
+CRITICAL INSTRUCTIONS:
+1. You MUST generate EXACTLY {num_questions} detailed questions in total, distributed across the requested categories. 
+2. DO NOT take shortcuts, do NOT be lazy, and do NOT omit answers. 
+3. I am programmatically validating the array lengths to ensure exactly {num_questions} questions exist.
+4. For every single question, provide:
+   - Clear, specific question
+   - Detailed sample answer (3-6 sentences)
+   - Key points to hit
+   - What hiring managers assess
+   - Common mistakes to avoid
+   - Follow-up questions they might ask
 
 Make answers comprehensive, realistic, and interview-ready. Include specific examples where applicable."""
 
             try:
-                result = groq_json(prompt, max_tokens=4000)
+                result = groq_json(prompt, max_tokens=7000)
                 save_session(role, company, result)
                 _render_questions(result, role, company)
             except Exception as e:
