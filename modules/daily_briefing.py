@@ -161,11 +161,48 @@ Write a comprehensive briefing in this EXACT format:
 Keep it concise, motivating, and practical. Write for freshers and early-career professionals."""
 
             try:
-                briefing = groq_text(prompt, max_tokens=1500)
-                save_briefing(briefing)
-                _render_briefing(briefing)
+                # Try models in order with automatic fallback
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", 1500),
+                    ("openai/gpt-oss-120b", 1500),
+                    ("llama-3.1-8b-instant", 1500)
+                ]
+                
+                briefing = None
+                last_error = None
+                for model, max_tokens in models_to_try:
+                    try:
+                        briefing = groq_text(prompt, model=model, max_tokens=max_tokens)
+                        break  # Success, exit loop
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        last_error = e
+                        
+                        # Retry with next model on rate limits or JSON errors
+                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg or "expecting value" in error_msg or "limit" in error_msg:
+                            continue  # Try next model
+                        else:
+                            raise  # Other errors, don't try next model
+                
+                if briefing:
+                    save_briefing(briefing)
+                    _render_briefing(briefing)
+                else:
+                    if last_error:
+                        error_str = str(last_error)
+                        if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                            st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                        else:
+                            st.error(f"❌ Generation failed: {error_str[:100]}... Please try again.")
+                    else:
+                        st.error("❌ All models are currently at capacity. Please try again tomorrow!")
+                    return
             except Exception as e:
-                st.error(f"Could not generate briefing: {e}")
+                error_str = str(e)
+                if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                    st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                else:
+                    st.error(f"Could not generate briefing: {error_str}")
                 return
 
     st.markdown("---")
