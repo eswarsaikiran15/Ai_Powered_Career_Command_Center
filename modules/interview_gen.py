@@ -37,7 +37,16 @@ def run():
         "Technical", "Behavioral", "Situational", "HR/Cultural", "Case Study", "Coding"
     ], default=["Technical", "Behavioral", "HR/Cultural"])
 
-    num_questions = st.slider("Number of Questions", 5, 25, 15)
+    col_nq, col_mod = st.columns(2)
+    with col_nq:
+        num_questions = st.slider("Number of Questions", 5, 25, 15)
+    with col_mod:
+        selected_model = st.selectbox("AI Model", [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ], help="Change the model if you encounter rate limits (e.g., Code 429).")
 
     if st.button("🎯 Generate Questions", type="primary", use_container_width=True,
                  disabled=not role):
@@ -167,7 +176,7 @@ CRITICAL INSTRUCTIONS:
 Make answers comprehensive, realistic, and interview-ready. Include specific examples where applicable."""
 
             try:
-                result = groq_json(prompt, max_tokens=7000)
+                result = groq_json(prompt, model=selected_model, max_tokens=7000)
                 save_session(role, company, result)
                 _render_questions(result, role, company)
             except Exception as e:
