@@ -162,11 +162,47 @@ Top Repositories:
 Target Role: {target_role or 'Software/Data role'}"""
 
             try:
-                result = groq_json(prompt, max_tokens=2000)
-                save_github_analysis(username, result.get("overall_score", 0), result)
-                _render_analysis(profile, result, username)
+                # Try models in order with automatic fallback
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", 2000),
+                    ("openai/gpt-oss-120b", 2000),
+                    ("llama-3.1-8b-instant", 2000)
+                ]
+                
+                result = None
+                last_error = None
+                for model, max_tokens in models_to_try:
+                    try:
+                        result = groq_json(prompt, model=model, max_tokens=max_tokens)
+                        break  # Success, exit loop
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        last_error = e
+                        
+                        # Retry with next model on rate limits or JSON errors
+                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg or "expecting value" in error_msg or "limit" in error_msg:
+                            continue  # Try next model
+                        else:
+                            raise  # Other errors, don't try next model
+                
+                if result:
+                    save_github_analysis(username, result.get("overall_score", 0), result)
+                    _render_analysis(profile, result, username)
+                else:
+                    if last_error:
+                        error_str = str(last_error)
+                        if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                            st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                        else:
+                            st.error(f"❌ Analysis failed: {error_str[:100]}... Please try again.")
+                    else:
+                        st.error("❌ All models are currently at capacity. Please try again tomorrow!")
             except Exception as e:
-                st.error(f"AI analysis failed: {e}")
+                error_str = str(e)
+                if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                    st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                else:
+                    st.error(f"AI analysis failed: {error_str}")
 
     # History
     with st.expander("📚 Previous Analyses"):
