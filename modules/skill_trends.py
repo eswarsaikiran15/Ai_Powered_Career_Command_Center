@@ -115,10 +115,47 @@ Job posting data:
 Return exactly 20 skills in top_skills with realistic demand scores 1-100."""
 
             try:
-                skills_data = groq_json(prompt, max_tokens=1500)
-                save_trends(skills_data)
+                # Try models in order with automatic fallback
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", 1500),
+                    ("openai/gpt-oss-120b", 1500),
+                    ("llama-3.1-8b-instant", 1500)
+                ]
+                
+                skills_data = None
+                last_error = None
+                for model, max_tokens in models_to_try:
+                    try:
+                        skills_data = groq_json(prompt, model=model, max_tokens=max_tokens)
+                        break  # Success, exit loop
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        last_error = e
+                        
+                        # Retry with next model on rate limits or JSON errors
+                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg or "expecting value" in error_msg or "limit" in error_msg:
+                            continue  # Try next model
+                        else:
+                            raise  # Other errors, don't try next model
+                
+                if skills_data:
+                    save_trends(skills_data)
+                else:
+                    if last_error:
+                        error_str = str(last_error)
+                        if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                            st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                        else:
+                            st.error(f"❌ Analysis failed: {error_str[:100]}... Please try again.")
+                    else:
+                        st.error("❌ All models are currently at capacity. Please try again tomorrow!")
+                    return
             except Exception as e:
-                st.error(f"AI analysis failed: {e}")
+                error_str = str(e)
+                if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                    st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                else:
+                    st.error(f"AI analysis failed: {error_str}")
                 return
 
     # ── Render ────────────────────────────────────────────────────────────────
