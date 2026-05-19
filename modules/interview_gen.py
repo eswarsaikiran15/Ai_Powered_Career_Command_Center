@@ -180,12 +180,20 @@ Make answers comprehensive, realistic, and interview-ready. Include specific exa
             c = conn.cursor()
             c.execute("SELECT id, timestamp, role, company FROM interview_sessions ORDER BY timestamp DESC LIMIT 10")
             rows = c.fetchall()
-            conn.close()
+            
             if rows:
                 for row in rows:
-                    st.markdown(f"**{row[2]}** at **{row[3] or 'N/A'}** — {row[1]}")
+                    hc1, hc2 = st.columns([5, 1])
+                    with hc1:
+                        st.markdown(f"**{row[2]}** at **{row[3] or 'N/A'}** — {row[1]}")
+                    with hc2:
+                        if st.button("🗑️", key=f"del_interview_{row[0]}", help="Delete session"):
+                            c.execute("DELETE FROM interview_sessions WHERE id = ?", (row[0],))
+                            conn.commit()
+                            st.rerun()
             else:
                 st.info("No sessions yet.")
+            conn.close()
         except:
             pass
 
