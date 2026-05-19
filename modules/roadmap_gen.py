@@ -293,14 +293,50 @@ Create a PRODUCTION-READY roadmap with:
 Make it realistic for {hours_per_week} hours/week."""
 
             try:
-                roadmap = groq_json(prompt, max_tokens=5000)
-                roadmap_id = save_roadmap(", ".join(roadmap.get("target_roles",[])), roadmap)
-                if "current_roadmap_id" not in st.session_state:
-                    st.session_state.current_roadmap_id = roadmap_id
-                st.session_state.current_roadmap = roadmap
-                _render_roadmap(roadmap, roadmap_id)
+                # Try models in order with automatic fallback
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", 5000),
+                    ("openai/gpt-oss-120b", 5000),
+                    ("llama-3.1-8b-instant", 4000)
+                ]
+                
+                roadmap = None
+                last_error = None
+                for model, max_tokens in models_to_try:
+                    try:
+                        roadmap = groq_json(prompt, model=model, max_tokens=max_tokens)
+                        break  # Success, exit loop
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        last_error = e
+                        
+                        # Retry with next model on rate limits or JSON errors
+                        if "rate_limit" in error_msg or "429" in error_msg or "413" in error_msg or "expecting value" in error_msg or "limit" in error_msg:
+                            continue  # Try next model
+                        else:
+                            raise  # Other errors, don't try next model
+                
+                if roadmap:
+                    roadmap_id = save_roadmap(", ".join(roadmap.get("target_roles",[])), roadmap)
+                    if "current_roadmap_id" not in st.session_state:
+                        st.session_state.current_roadmap_id = roadmap_id
+                    st.session_state.current_roadmap = roadmap
+                    _render_roadmap(roadmap, roadmap_id)
+                else:
+                    if last_error:
+                        error_str = str(last_error)
+                        if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                            st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                        else:
+                            st.error(f"❌ Generation failed: {error_str[:100]}... Please try again.")
+                    else:
+                        st.error("❌ All models are currently at capacity. Please try again tomorrow!")
             except Exception as e:
-                st.error(f"Roadmap generation failed: {e}")
+                error_str = str(e)
+                if "rate_limit" in error_str.lower() or "limit" in error_str.lower():
+                    st.error("⏳ **API limit exhausted for today.** All models have reached their daily token limit. Please try again tomorrow!")
+                else:
+                    st.error(f"Roadmap generation failed: {error_str}")
 
     # Show existing roadmap if in session
     elif "current_roadmap" in st.session_state:
