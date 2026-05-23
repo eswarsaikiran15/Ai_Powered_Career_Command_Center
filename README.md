@@ -2,6 +2,8 @@
 
 > Your complete AI-powered job search operating system — 8 tools, zero cost, built with Python + Streamlit + Groq.
 
+Live Demo: https://career-command-center.streamlit.app/
+
 ![Python](https://img.shields.io/badge/Python-3.9+-blue) ![Streamlit](https://img.shields.io/badge/Streamlit-1.32-red) ![Groq](https://img.shields.io/badge/Groq-Free-green) ![Cost](https://img.shields.io/badge/Cost-₹0-brightgreen)
 
 ---
